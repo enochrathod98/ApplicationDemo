@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">ApplicationDemo</string>
+    <string name="click_to_login">Click to Login</string>
+    <string name="click_to_register">Click to Register</string>
+</resources>
