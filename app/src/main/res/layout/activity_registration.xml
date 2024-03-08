@@ -10,32 +10,16 @@
     android:gravity="center"
     tools:context=".screens.RegistrationActivity">
 
-    <EditText
-        android:id="@+id/editTextEmail_reg"
+    <com.example.applicationdemo.screens.LoginRegisterView
+        android:id="@+id/registration_View"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Email"
-        android:inputType="textEmailAddress"/>
-
-    <EditText
-        android:id="@+id/editTextPassword_reg"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Password"
-        android:inputType="textPassword"/>
+        android:layout_height="wrap_content" />
 
     <ProgressBar
         android:id="@+id/progress_bar"
         android:visibility="gone"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"/>
-
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Register"
-        android:id="@+id/buttonRegister"/>
-
 
     <TextView
         android:id="@+id/login_txt"

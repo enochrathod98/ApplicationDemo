@@ -1,4 +1,4 @@
-package com.example.applicationdemo
+package com.example.applicationdemo.models
 
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -16,12 +16,11 @@ class UserViewModel @Inject constructor(val repository: UserRepository) : ViewMo
     private var userLiveData = MutableStateFlow(emptyList<UsersItem>())
     val _userLiveData: MutableStateFlow<List<UsersItem>> get() = userLiveData
 
-
     init {
         getData()
     }
 
-    fun getData() {
+    private fun getData() {
         viewModelScope.launch {
             val list = repository.getUsers().users
             userLiveData.value = list

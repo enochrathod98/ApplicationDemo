@@ -3,22 +3,19 @@ package com.example.applicationdemo.screens
 import android.content.ContentValues.TAG
 import android.content.Intent
 import android.os.Bundle
-import android.util.Base64
 import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.example.applicationdemo.R
+import com.example.applicationdemo.comman.CommanUtils
 import com.example.applicationdemo.databinding.ActivityLoginBinding
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.auth
 import com.google.firebase.database.FirebaseDatabase
-import javax.crypto.Cipher
-import javax.crypto.SecretKey
-import javax.crypto.spec.GCMParameterSpec
-import javax.crypto.spec.SecretKeySpec
 
-class LoginActivity : AppCompatActivity() {
+class LoginActivity : AppCompatActivity(), LoginRegisterView.LoginRegisterViewListener {
 
     private lateinit var binding: ActivityLoginBinding
     private lateinit var auth: FirebaseAuth
@@ -28,14 +25,19 @@ class LoginActivity : AppCompatActivity() {
     public override fun onStart() {
         super.onStart()
         // Check if user is signed in (non-null) and update UI accordingly.
-        val currentUser = auth.currentUser
-        if (currentUser != null) {
-            val intent = Intent(
-                this,
-                MainActivity::class.java
-            )
-            startActivity(intent)
-            finish()
+        if (!intent.hasExtra(getString(R.string.isfromregister))) {
+            val isFromRegister = intent.getBooleanExtra(getString(R.string.isfromregister), false)
+            if (!isFromRegister) {
+                val currentUser = auth.currentUser
+                if (currentUser != null) {
+                    val intent = Intent(
+                        this,
+                        MainActivity::class.java
+                    )
+                    startActivity(intent)
+                    finish()
+                }
+            }
         }
     }
 
@@ -45,8 +47,8 @@ class LoginActivity : AppCompatActivity() {
         setContentView(binding.root)
         auth = Firebase.auth
         database = FirebaseDatabase.getInstance()
-
-
+        binding.loginView.listener = this
+        binding.loginView.setButtonText(getString(R.string.login))
 
         binding.registrationTxt.setOnClickListener {
             val intent = Intent(
@@ -56,21 +58,6 @@ class LoginActivity : AppCompatActivity() {
             startActivity(intent)
             finish()
         }
-
-        binding.buttonLogin.setOnClickListener {
-            val email: String = binding.editTextEmailLogin.text.toString()
-            val password: String = binding.editTextPasswordLogin.text.toString()
-            if (isValid(email, password)) {
-                binding.progressBar.visibility = View.VISIBLE
-                login(email, password)
-            } else {
-                Toast.makeText(
-                    baseContext,
-                    "Please enter correct Email and Password",
-                    Toast.LENGTH_SHORT,
-                ).show()
-            }
-        }
     }
 
     private fun login(email: String, password: String) {
@@ -78,13 +65,17 @@ class LoginActivity : AppCompatActivity() {
             .addOnCompleteListener(this) { task ->
                 if (task.isSuccessful) {
                     // Sign in success, update UI with the signed-in user's information
+                    // Getting Users Information
                     val currentUser = auth.currentUser
-                    val userRef = database.getReference("users").child(currentUser!!.uid)
-                    userRef.child("encryptedPassword").get().addOnSuccessListener { snapshot ->
+                    // Getting Encrypted Password form Firebase Realtime database
+                    val userRef = database.getReference(getString(R.string.users)).child(currentUser!!.uid)
+                    userRef.child(getString(R.string.encryptedpassword)).get().addOnSuccessListener { snapshot ->
                         val encryptedPassword = snapshot.value as String
-                        val decryptedPassword = decryptPassword(encryptedPassword)
+                        val decryptedPassword = CommanUtils.decryptPassword(encryptedPassword)
+                        // Checking the Encrypted and Decrypted Values
                         if (decryptedPassword == password) {
-                            Toast.makeText(this, "Login successful", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(this,
+                                getString(R.string.login_successful), Toast.LENGTH_SHORT).show()
                             Log.d(TAG, "signInWithEmail:success")
                             binding.progressBar.visibility = View.GONE
                             val intent = Intent(
@@ -94,13 +85,14 @@ class LoginActivity : AppCompatActivity() {
                             startActivity(intent)
                             finish()
                         } else {
-                            Toast.makeText(this, "Invalid credentials", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(this,
+                                getString(R.string.invalid_credentials), Toast.LENGTH_SHORT).show()
                         }
                     }.addOnFailureListener { exception ->
                         binding.progressBar.visibility = View.GONE
                         Toast.makeText(
                             this,
-                            "Failed to retrieve password: ${exception.message}",
+                            getString(R.string.failed_to_retrieve_password, exception.message),
                             Toast.LENGTH_SHORT
                         ).show()
                     }
@@ -111,60 +103,23 @@ class LoginActivity : AppCompatActivity() {
                     Log.w(TAG, "signInWithEmail:failure", task.exception)
                     Toast.makeText(
                         baseContext,
-                        "Login failed.",
+                        getString(R.string.login_failed),
                         Toast.LENGTH_SHORT,
                     ).show()
                 }
             }
     }
 
-
-    fun isValid(email: String, password: String): Boolean {
-        // Check for empty email or password
-        if (email.isEmpty() || password.isEmpty()) {
-            return false
+    override fun onButtonClicked(email: String, password: String) {
+        if (CommanUtils.isValid(email, password,baseContext)) {
+            binding.progressBar.visibility = View.VISIBLE
+            login(email, password)
+        } else {
+            Toast.makeText(
+                baseContext,
+                getString(R.string.please_enter_correct_email_and_password),
+                Toast.LENGTH_SHORT,
+            ).show()
         }
-
-        // Validate email format
-        val emailPattern = "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}".toRegex()
-        if (!email.matches(emailPattern)) {
-            return false
-        }
-
-        // Validate password for at least one special character and one capital letter
-        val specialCharPattern = "[!@#\$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?]".toRegex()
-        val capitalLetterPattern = "[A-Z]".toRegex()
-
-        val hasSpecialChar = specialCharPattern.containsMatchIn(password)
-        val hasCapitalLetter = capitalLetterPattern.containsMatchIn(password)
-
-        return hasSpecialChar && hasCapitalLetter
     }
-
-    // Function to decrypt the password
-    private fun decryptPassword(encryptedPassword: String): String {
-        // Decode the Base64 string to get the combined byte array
-        val decodedBytes = Base64.decode(encryptedPassword, Base64.DEFAULT)
-        // Extract the IV and cipher text from the combined byte array
-        val iv = decodedBytes.copyOf(12)
-        val cipherText = decodedBytes.copyOfRange(12, decodedBytes.size)
-        // Generate the key for decryption
-        val key: SecretKey = generateKey()
-        // Initialize the cipher with AES decryption in GCM mode
-        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-        // Specify the parameters including the IV for decryption
-        val spec = GCMParameterSpec(128, iv)
-        // Initialize the cipher with the generated key and parameters for decryption
-        cipher.init(Cipher.DECRYPT_MODE, key, spec)
-        // Decrypt the cipher text and return the result as a string
-        val decryptedBytes = cipher.doFinal(cipherText)
-        return String(decryptedBytes)
-    }
-
-    // Function to generate a random key
-    private fun generateKey(): SecretKey {
-        val key = ByteArray(16) // Create a byte array of size 16 bytes (128 bits)
-        return SecretKeySpec(key, "AES") // Create a SecretKey object from the byte array and return
-    }
-
 }

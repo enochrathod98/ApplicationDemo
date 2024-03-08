@@ -5,45 +5,30 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
     android:gravity="center"
+    android:orientation="vertical"
     android:padding="16dp"
     tools:context=".screens.LoginActivity">
 
-    <EditText
-        android:id="@+id/editTextEmail_login"
+    <com.example.applicationdemo.screens.LoginRegisterView
+        android:id="@+id/login_View"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Email"
-        android:inputType="textEmailAddress"/>
-
-    <EditText
-        android:id="@+id/editTextPassword_login"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Password"
-        android:inputType="textPassword"/>
+        android:layout_height="wrap_content" />
 
     <ProgressBar
         android:id="@+id/progress_bar"
-        android:visibility="gone"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
-
-    <Button
-        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Login"
-        android:id="@+id/buttonLogin"/>
+        android:visibility="gone" />
 
     <TextView
         android:id="@+id/registration_txt"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
         android:gravity="center"
-        android:textStyle="bold"
-        android:textSize="16sp"
         android:text="@string/click_to_register"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+        android:textSize="16sp"
+        android:textStyle="bold" />
 
 </LinearLayout>

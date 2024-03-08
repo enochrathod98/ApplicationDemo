@@ -1,5 +1,6 @@
 package com.example.applicationdemo.adapter
 
+import android.annotation.SuppressLint
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
@@ -9,6 +10,7 @@ import com.example.applicationdemo.models.UsersItem
 class UserAdapter : RecyclerView.Adapter<UserAdapter.UserVH>() {
 
     var planes: List<UsersItem> = emptyList()
+        @SuppressLint("NotifyDataSetChanged")
         set(value) {
             field = value
             notifyDataSetChanged()

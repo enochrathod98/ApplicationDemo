@@ -2,4 +2,21 @@
     <string name="app_name">ApplicationDemo</string>
     <string name="click_to_login">Click to Login</string>
     <string name="click_to_register">Click to Register</string>
+    <string name="isfromregister">isFromRegister</string>
+    <string name="empty_field_error_message">Please fill in all fields</string>
+    <string name="valid_email_error_message">Please enter a valid email address.</string>
+    <string name="valid_password_error_message">Password must be at least 8 characters long and contain a combination of letters, numbers, and special characters.</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="login">Login</string>
+    <string name="users">users</string>
+    <string name="encryptedpassword">encryptedPassword</string>
+    <string name="login_successful">Login successful</string>
+    <string name="invalid_credentials">Invalid credentials</string>
+    <string name="failed_to_retrieve_password">Failed to retrieve password: %1$s</string>
+    <string name="login_failed">Login failed.</string>
+    <string name="please_enter_correct_email_and_password">Please enter correct Email and Password</string>
+    <string name="register">Register</string>
+    <string name="registration_successful">Registration successful</string>
+    <string name="registration_failed">Registration failed.</string>
 </resources>

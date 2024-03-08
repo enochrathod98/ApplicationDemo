@@ -5,10 +5,11 @@ import android.os.Bundle
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
+import android.view.View
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import com.example.applicationdemo.R
-import com.example.applicationdemo.UserViewModel
+import com.example.applicationdemo.models.UserViewModel
 import com.example.applicationdemo.adapter.UserAdapter
 import com.example.applicationdemo.databinding.ActivityMainBinding
 import com.google.firebase.Firebase
@@ -34,7 +35,6 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         auth = Firebase.auth
-        //https://dummyjson.com/users
         setSupportActionBar(binding.toolbar)
 
         userAdapter = UserAdapter()
@@ -42,11 +42,15 @@ class MainActivity : AppCompatActivity() {
         GlobalScope.launch {
             userViewModel._userLiveData.collect {
                 runOnUiThread {
+                    if (it.isEmpty()){
+                        binding.progressBar.visibility = View.VISIBLE
+                    }else{
+                        binding.progressBar.visibility = View.GONE
+                    }
                     userAdapter.planes = it
                 }
             }
         }
-
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {

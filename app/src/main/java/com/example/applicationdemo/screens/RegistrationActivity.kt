@@ -3,29 +3,23 @@ package com.example.applicationdemo.screens
 import android.content.ContentValues.TAG
 import android.content.Intent
 import android.os.Bundle
-import android.util.Base64
 import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.example.applicationdemo.R
+import com.example.applicationdemo.comman.CommanUtils
 import com.example.applicationdemo.databinding.ActivityRegistrationBinding
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.auth
 import com.google.firebase.database.FirebaseDatabase
-import java.security.MessageDigest
-import java.security.SecureRandom
-import javax.crypto.Cipher
-import javax.crypto.SecretKey
-import javax.crypto.spec.GCMParameterSpec
-import javax.crypto.spec.SecretKeySpec
 
 
-class RegistrationActivity : AppCompatActivity() {
+class RegistrationActivity : AppCompatActivity(), LoginRegisterView.LoginRegisterViewListener {
     private lateinit var binding: ActivityRegistrationBinding
     private lateinit var auth: FirebaseAuth
     private lateinit var database: FirebaseDatabase
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,6 +27,8 @@ class RegistrationActivity : AppCompatActivity() {
         setContentView(binding.root)
         auth = Firebase.auth
         database = FirebaseDatabase.getInstance()
+        binding.registrationView.listener = this
+        binding.registrationView.setButtonText(getString(R.string.register))
 
 
         binding.loginTxt.setOnClickListener {
@@ -43,15 +39,6 @@ class RegistrationActivity : AppCompatActivity() {
             startActivity(intent)
             finish()
         }
-
-        binding.buttonRegister.setOnClickListener {
-            val email: String = binding.editTextEmailReg.text.toString()
-            val password: String = binding.editTextPasswordReg.text.toString()
-            if (isValid(email, password)) {
-                binding.progressBar.visibility = View.VISIBLE
-                createUser(email, password)
-            }
-        }
     }
 
     private fun createUser(email: String, password: String) {
@@ -61,14 +48,16 @@ class RegistrationActivity : AppCompatActivity() {
                 if (task.isSuccessful) {
                     // Sign in success, update UI with the signed-in user's information
                     val currentUser = auth.currentUser
-                    val encryptedPassword = encryptPassword(password)
-                    val userRef = database.getReference("users").child(currentUser!!.uid)
-                    userRef.child("encryptedPassword").setValue(encryptedPassword)
-                    Toast.makeText(this, "Registration successful", Toast.LENGTH_SHORT).show()
+                    val encryptedPassword = CommanUtils.encryptPassword(password)
+                    val userRef = database.getReference(getString(R.string.users)).child(currentUser!!.uid)
+                    userRef.child(getString(R.string.encryptedpassword)).setValue(encryptedPassword)
+                    Toast.makeText(this,
+                        getString(R.string.registration_successful), Toast.LENGTH_SHORT).show()
                     val intent = Intent(
                         this,
                         LoginActivity::class.java
                     )
+                    intent.putExtra(getString(R.string.isfromregister), true)
                     startActivity(intent)
                     finish()
                 } else {
@@ -76,59 +65,24 @@ class RegistrationActivity : AppCompatActivity() {
                     Log.w(TAG, "createUserWithEmail:failure", task.exception)
                     Toast.makeText(
                         baseContext,
-                        "Registration failed.",
+                        getString(R.string.registration_failed),
                         Toast.LENGTH_SHORT,
                     ).show()
                 }
             }
     }
 
-
-    fun isValid(email: String, password: String): Boolean {
-        // Check for empty email or password
-        if (email.isEmpty() || password.isEmpty()) {
-            return false
+    override fun onButtonClicked(email: String, password: String) {
+        if (CommanUtils.isValid(email, password, baseContext)) {
+            binding.progressBar.visibility = View.VISIBLE
+            createUser(email, password)
+        } else {
+            Toast.makeText(
+                baseContext,
+                getString(R.string.please_enter_correct_email_and_password),
+                Toast.LENGTH_SHORT,
+            ).show()
         }
-
-        // Validate email format
-        val emailPattern = "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}".toRegex()
-        if (!email.matches(emailPattern)) {
-            return false
-        }
-
-        // Validate password for at least one special character and one capital letter
-        val specialCharPattern = "[!@#\$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?]".toRegex()
-        val capitalLetterPattern = "[A-Z]".toRegex()
-
-        val hasSpecialChar = specialCharPattern.containsMatchIn(password)
-        val hasCapitalLetter = capitalLetterPattern.containsMatchIn(password)
-
-        return hasSpecialChar && hasCapitalLetter
-    }
-
-    // Function to encrypt the password
-    private fun encryptPassword(password: String): String {
-        // Generate a random key
-        val key: SecretKey = generateKey()
-        // Initialize the cipher with AES encryption in GCM mode
-        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-        // Initialize the cipher with the generated key for encryption
-        cipher.init(Cipher.ENCRYPT_MODE, key)
-        // Get the initialization vector (IV) generated by the cipher
-        val iv = cipher.iv
-        // Encrypt the password using the initialized cipher
-        val encryptedText = cipher.doFinal(password.toByteArray())
-        // Combine the IV and encrypted text into a single byte array
-        val combined = ByteArray(iv.size + encryptedText.size)
-        System.arraycopy(iv, 0, combined, 0, iv.size)
-        System.arraycopy(encryptedText, 0, combined, iv.size, encryptedText.size)
-        // Encode the combined byte array to Base64 string and return
-        return Base64.encodeToString(combined, Base64.DEFAULT)
-    }
-
-    private fun generateKey(): SecretKey {
-        val key = ByteArray(16)
-        return SecretKeySpec(key, "AES")
     }
 }
 
